@@ -9,7 +9,8 @@ import java.io.IOException;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.Channel;
-import java.util.concurrent.TimeoutException;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 /**
  *
@@ -27,31 +28,20 @@ public class EmitLog {
 
         channel.exchangeDeclare(EXCHANGE_NAME, BuiltinExchangeType.FANOUT);
 
-        String message = getMessage(argv);
+        FileReader fr = new FileReader("C:\\xampp\\apache\\logs\\access.log");
+        BufferedReader br = new BufferedReader(fr);
 
-        channel.basicPublish(EXCHANGE_NAME, "", null, message.getBytes("UTF-8"));
-        System.out.println(" [x] Sent '" + message + "'");
+        while (true) {
+            String line = br.readLine();
+            if (line == null) {
+                Thread.sleep(1 * 1000);
+            } else {
+                channel.basicPublish(EXCHANGE_NAME, "", null, line.getBytes());
+                System.out.println(" [x] Sent '" + line + "'");
+                System.out.println(line);
+            }
+        }
 
-        channel.close();
-        connection.close();
     }
 
-    private static String getMessage(String[] strings) {
-        if (strings.length < 1) {
-            return "info: Hello World!";
-        }
-        return joinStrings(strings, " ");
-    }
-
-    private static String joinStrings(String[] strings, String delimiter) {
-        int length = strings.length;
-        if (length == 0) {
-            return "";
-        }
-        StringBuilder words = new StringBuilder(strings[0]);
-        for (int i = 1; i < length; i++) {
-            words.append(delimiter).append(strings[i]);
-        }
-        return words.toString();
-    }
 }
